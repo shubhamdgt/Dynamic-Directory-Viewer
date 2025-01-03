@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder and File Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Folder and File Viewer</h1>
+    <button id="selectFolder">Select Folder to View Folders</button>
+    <button id="selectFileFolder">Select Folder to View Files</button>
+    <div id="folderList">
+        <!-- Folders will be displayed here -->
+    </div>
+    <div id="fileList">
+        <!-- Files will be displayed here -->
+    </div>
+
+    <script>
+        document.getElementById('selectFolder').addEventListener('click', async () => {
+            try {
+                // Request directory access
+                const directoryHandle = await window.showDirectoryPicker();
+
+                const folderList = document.getElementById('folderList');
+                folderList.innerHTML = '<h2>Folders:</h2>'; // Clear existing content and add title
+
+                // Iterate through the directory and display folder names
+                for await (const [name, handle] of directoryHandle.entries()) {
+                    if (handle.kind === 'directory') {
+                        const folderDiv = document.createElement('div');
+                        folderDiv.className = 'item';
+                        folderDiv.textContent = name;
+                        folderList.appendChild(folderDiv);
+                    }
+                }
+            } catch (error) {
+                console.error('Error accessing folder:', error);
+                alert('Failed to access folder. Make sure to select the correct folder.');
+            }
+        });
+
+        document.getElementById('selectFileFolder').addEventListener('click', async () => {
+            try {
+                // Request directory access
+                const directoryHandle = await window.showDirectoryPicker();
+
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '<h2>Files:</h2>'; // Clear existing content and add title
+
+                // Iterate through the directory and display file names
+                for await (const [name, handle] of directoryHandle.entries()) {
+                    if (handle.kind === 'file') {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'item';
+                        fileDiv.textContent = name;
+                        fileList.appendChild(fileDiv);
+                    }
+                }
+            } catch (error) {
+                console.error('Error accessing folder:', error);
+                alert('Failed to access folder. Make sure to select the correct folder.');
+            }
+        });
+    </script>
+</body>
+</html>

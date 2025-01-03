@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .folder {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Folder Viewer</h1>
+    <button id="selectFolder">Select POC Folder</button>
+    <div id="folderList">
+        <!-- Folders will be displayed here -->
+    </div>
+
+    <script>
+        document.getElementById('selectFolder').addEventListener('click', async () => {
+            try {
+                // Request directory access
+                const directoryHandle = await window.showDirectoryPicker();
+
+                const folderList = document.getElementById('folderList');
+                folderList.innerHTML = ''; // Clear existing content
+
+                // Iterate through the directory and display folder names
+                for await (const [name, handle] of directoryHandle.entries()) {
+                    if (handle.kind === 'directory') {
+                        const folderDiv = document.createElement('div');
+                        folderDiv.className = 'folder';
+                        folderDiv.textContent = name;
+                        folderList.appendChild(folderDiv);
+                    }
+                }
+            } catch (error) {
+                console.error('Error accessing folder:', error);
+                alert('Failed to access folder. Make sure to select the correct folder.');
+            }
+        });
+    </script>
+</body>
+</html>
