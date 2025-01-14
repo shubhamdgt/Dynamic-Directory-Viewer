@@ -15,11 +15,30 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .details {
+            font-size: 12px;
+            color: #555;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: #fff;
+            font-size: 12px;
+        }
+        .badge.new {
+            background-color: green;
+        }
+        .badge.updated {
+            background-color: orange;
         }
     </style>
 </head>
 <body>
-    <h1>Dynamic Directory Viewer File</h1>
+    <h1>Dynamic Directory Viewer</h1>
     <button id="selectFolder">Select Folder</button>
     <button id="refreshData">Get Latest Data</button>
     <div id="folderList">
@@ -32,32 +51,83 @@
     <script>
         let directoryHandle = null;
 
+        // Fetch the stored data from Local Storage
+        function getStoredData() {
+            const data = localStorage.getItem('directoryData');
+            return data ? JSON.parse(data) : { folders: {}, files: {} };
+        }
+
+        // Save current data to Local Storage
+        function saveDataToLocalStorage(folders, files) {
+            const data = { folders, files };
+            localStorage.setItem('directoryData', JSON.stringify(data));
+        }
+
+        // Convert a timestamp to a human-readable date and time
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+        }
+
         async function displayContents() {
             if (!directoryHandle) return;
 
             const folderList = document.getElementById('folderList');
             const fileList = document.getElementById('fileList');
-            folderList.innerHTML = '<h2>Folders:</h2>'; // Clear existing content and add title
-            fileList.innerHTML = '<h2>Files:</h2>'; // Clear existing content and add title
+            folderList.innerHTML = '<h2>Folders:</h2>';
+            fileList.innerHTML = '<h2>Files:</h2>';
+
+            const previousData = getStoredData();
+            const currentFolders = {};
+            const currentFiles = {};
 
             for await (const [name, handle] of directoryHandle.entries()) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item';
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'details';
+
                 itemDiv.textContent = name;
 
                 if (handle.kind === 'directory') {
                     folderList.appendChild(itemDiv);
+                    currentFolders[name] = true;
                 } else if (handle.kind === 'file') {
+                    const file = await handle.getFile();
+                    const lastModified = formatDate(file.lastModified);
+
+                    // Display last modified date and time
+                    detailsDiv.textContent = `Last Modified: ${lastModified}`;
+                    itemDiv.appendChild(detailsDiv);
+
+                    const isNew = !(name in previousData.files);
+                    const isUpdated = !isNew && previousData.files[name].lastModified !== file.lastModified;
+
+                    if (isNew) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge new';
+                        badge.textContent = 'New';
+                        itemDiv.appendChild(badge);
+                    } else if (isUpdated) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge updated';
+                        badge.textContent = 'Updated';
+                        itemDiv.appendChild(badge);
+                    }
+
                     fileList.appendChild(itemDiv);
+                    currentFiles[name] = { lastModified: file.lastModified };
                 }
             }
+
+            // Save the current state to Local Storage
+            saveDataToLocalStorage(currentFolders, currentFiles);
         }
 
         document.getElementById('selectFolder').addEventListener('click', async () => {
             try {
                 directoryHandle = await window.showDirectoryPicker();
-
-                // Display the initial folder and file contents
                 await displayContents();
             } catch (error) {
                 console.error('Error accessing folder:', error);
@@ -71,8 +141,6 @@
                     alert('Please select a folder first.');
                     return;
                 }
-
-                // Refresh folder and file contents
                 await displayContents();
             } catch (error) {
                 console.error('Error refreshing data:', error);

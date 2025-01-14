@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder and File Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Directory Viewer File</h1>
+    <button id="selectFolder">Select Folder</button>
+    <button id="refreshData">Get Latest Data</button>
+    <div id="folderList">
+        <!-- Folders will be displayed here -->
+    </div>
+    <div id="fileList">
+        <!-- Files will be displayed here -->
+    </div>
+
+    <script>
+        let directoryHandle = null;
+
+        async function displayContents() {
+            if (!directoryHandle) return;
+
+            const folderList = document.getElementById('folderList');
+            const fileList = document.getElementById('fileList');
+            folderList.innerHTML = '<h2>Folders:</h2>'; // Clear existing content and add title
+            fileList.innerHTML = '<h2>Files:</h2>'; // Clear existing content and add title
+
+            for await (const [name, handle] of directoryHandle.entries()) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.textContent = name;
+
+                if (handle.kind === 'directory') {
+                    folderList.appendChild(itemDiv);
+                } else if (handle.kind === 'file') {
+                    fileList.appendChild(itemDiv);
+                }
+            }
+        }
+
+        document.getElementById('selectFolder').addEventListener('click', async () => {
+            try {
+                directoryHandle = await window.showDirectoryPicker();
+
+                // Display the initial folder and file contents
+                await displayContents();
+            } catch (error) {
+                console.error('Error accessing folder:', error);
+                alert('Failed to access folder. Make sure to select the correct folder.');
+            }
+        });
+
+        document.getElementById('refreshData').addEventListener('click', async () => {
+            try {
+                if (!directoryHandle) {
+                    alert('Please select a folder first.');
+                    return;
+                }
+
+                // Refresh folder and file contents
+                await displayContents();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                alert('Failed to refresh data.');
+            }
+        });
+    </script>
+</body>
+</html>
